@@ -105,7 +105,7 @@ const MapComponent: React.FC = () => {
       <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: "100vh", width: "100%" }}>
         {/* OpenStreetMap tile layer for map rendering */}
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {/* Render all markers from state */}
         {markers.map((marker, index) => (
