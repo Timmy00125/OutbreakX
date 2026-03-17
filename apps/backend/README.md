@@ -107,11 +107,13 @@ backend-fastapi/
 
 5.  **Enable PostGIS (required)**:
     - If you use your own PostgreSQL instance, install PostGIS on that server and then run:
+
     ```sql
     CREATE EXTENSION IF NOT EXISTS postgis;
     ```
 
     - Easiest local option: use the included Docker Compose database service, which is already PostGIS-enabled.
+
     ```bash
     docker compose up -d db
     ```
@@ -168,6 +170,38 @@ FastAPI automatically generates interactive API documentation. Once the developm
 
 - **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+---
+
+## 🧬 Converting Synthea Data For OutbreakX
+
+This backend includes a converter that transforms large Synthea exports
+(`patients.csv` + `conditions.csv`) into the compact CSV schema expected by
+`POST /disease-cases/import/csv`.
+
+Run from repository root:
+
+```bash
+python3 apps/backend/scripts/convert_synthea_to_disease_cases.py \
+  --input-dir 10k_synthea_covid19_csv/10k_synthea_covid19_csv \
+  --output docs/synthea_covid_disease_cases.csv \
+  --collapse-covid-labels \
+  --time-bucket week
+```
+
+This reduces raw condition rows into aggregate disease reports with these
+columns:
+
+```text
+disease_name,location_name,report_date,case_count,latitude,longitude,source,severity_score
+```
+
+Then import the generated file through the existing API endpoint:
+
+```bash
+curl -X POST "http://localhost:8000/disease-cases/import/csv" \
+  -F "file=@docs/synthea_covid_disease_cases.csv"
+```
 
 ---
 
