@@ -10,12 +10,12 @@ const App: React.FC = () => {
         <nav>
           <ul className="nav-links">
             <li>
-              <a href="#home">Settings</a>
+              <a href="#tracker">Disease Tracker</a>
             </li>
           </ul>
         </nav>
       </header>
-      <section>
+      <section id="tracker">
         <MapComponent />
       </section>
     </div>

@@ -29,6 +29,7 @@ The platform leverages **ExpressJS, NodeJS, ReactJS, PostgreSQL with PostGIS,** 
 - **User-Friendly Interface**: A React-based frontend provides a smooth, responsive experience.
 - **Open Data Integration**: Integrates OpenStreetMaps for comprehensive mapping capabilities.
 - **API Access**: Node.js backend with Express allows seamless access to data for further analysis.
+- **Disease CSV Import**: Upload disease case reports (`disease_name, location_name, report_date, case_count, latitude, longitude`) and track outbreaks immediately on the map.
 
 ## Technologies
 
@@ -63,7 +64,6 @@ Ensure you have the following tools installed:
    ```
 
 3. **Set up PostgreSQL and PostGIS**:
-
    - Ensure PostgreSQL is running and initialize a database for OutbreakX.
    - Enable PostGIS on the database. For example:
      ```sql
@@ -71,7 +71,6 @@ Ensure you have the following tools installed:
      ```
 
 4. **Configure Environment Variables**:
-
    - Create a `.env` file in the root directory and add necessary environment variables (e.g., database credentials, API keys).
 
 ### Running the Project
@@ -100,14 +99,26 @@ To run both frontend and backend together using Turborepo:
 turbo run dev
 ```
 
-> **Note**: If you encounter any errors, please check the Turborepo configuration or the `package.json` files in individual workspaces for any issues.
+### Import Sample Disease Data
 
+You can load sample outbreak data with the file at `docs/sample_disease_cases.csv`.
+
+1. Start backend and frontend.
+2. Open the web app and use **Import Disease CSV** in the left control panel.
+3. Select `docs/sample_disease_cases.csv`.
+4. Review totals and disease breakdown on the map panel.
+
+### Disease Tracking API Endpoints
+
+- `POST /disease-cases/import/csv`: bulk import disease reports from CSV.
+- `GET /disease-cases`: list disease reports, optional query `?disease=Malaria`.
+- `GET /disease-cases/summary`: total reports, total cases, and per-disease totals.
+
+> **Note**: If you encounter any errors, please check the Turborepo configuration or the `package.json` files in individual workspaces for any issues.
 
 ## Contributing
 
 We welcome contributions! Please read our [Contributing Guidelines](docs/CONTRIBUTING.md) for details on the process for submitting pull requests and reporting issues.
-
-
 
 ---
 
@@ -132,8 +143,6 @@ Thank you for your interest in contributing during [Hacktoberfest](https://hackt
 
 ### Why Contribute?
 
-By participating in Hacktoberfest with **OutbreakX**, you’re helping to create a tool for tracking infectious disease outbreaks, benefiting both local and global communities. This is a chance to make an impact with open-source contributions that really matter. 
+By participating in Hacktoberfest with **OutbreakX**, you’re helping to create a tool for tracking infectious disease outbreaks, benefiting both local and global communities. This is a chance to make an impact with open-source contributions that really matter.
 
 Thank you for being part of this effort, and happy coding!
-
-
