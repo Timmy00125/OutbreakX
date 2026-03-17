@@ -1,16 +1,10 @@
 from collections.abc import Generator
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 import os
-from sqlalchemy.ext.declarative import declarative_base
 
-# Load environment variables from .env file
-from urllib.parse import urlparse
-import os
-from urllib.parse import urlparse
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 
 load_dotenv()
@@ -20,10 +14,7 @@ if not SQLALCHEMY_DATABASE_URL:
 
 
 def get_ogr_pg_dsn() -> str:
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
+    """Return DSN format expected by OGR2OGR tools."""
     host = os.getenv("DB_HOST")
     user = os.getenv("DB_USER")
     dbname = os.getenv("DB_NAME")
@@ -31,7 +22,9 @@ def get_ogr_pg_dsn() -> str:
 
     if not all([host, user, dbname, password]):
         raise ValueError(
-            f"Missing DB config: host={host}, user={user}, dbname={dbname}, password={bool(password)}"
+            "Missing DB config: "
+            f"host={host}, user={user}, dbname={dbname}, "
+            f"password={bool(password)}"
         )
 
     return f"host={host} user={user} dbname={dbname} password={password}"
@@ -52,9 +45,21 @@ except Exception as e:
     print(f"Error connecting to the database: {e}")
 
 
-def get_ogr_pg_dsn() -> str:
-    # OGR2OGR expects a different DSN format than SQLAlchemy
-    return f"host={os.getenv('DB_HOST')} user={os.getenv('DB_USER')} dbname={os.getenv('DB_NAME')} password={os.getenv('DB_PASSWORD')}"
+def ensure_postgis_extension() -> None:
+    """Ensure PostGIS is available before creating geometry-based tables."""
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+    except SQLAlchemyError as exc:
+        db_error = str(getattr(exc, "orig", exc))
+        raise RuntimeError(
+            "PostGIS extension is required but could not be enabled. "
+            "Your PostgreSQL server likely does not have PostGIS installed. "
+            "Install PostGIS on the DB server, or use the provided Docker DB "
+            "service (postgis/postgis image), then run: "
+            "CREATE EXTENSION IF NOT EXISTS postgis;. "
+            f"Database error: {db_error}"
+        ) from exc
 
 
 def get_db() -> Generator[Session, None, None]:
