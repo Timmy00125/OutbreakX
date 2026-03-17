@@ -1,3 +1,19 @@
-node_modules
-# Keep environment variables out of version control
+#Enviroment Varibales
 .env
+
+# Virtual environment
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pyc
+*.so
+
+#logging
+logs/
+
+#ruff
+.ruff_cache/
