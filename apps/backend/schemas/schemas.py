@@ -1,6 +1,6 @@
 # Pydantic models
 from pydantic import BaseModel
-from typing import Literal, List
+from typing import Literal, List, Optional
 from schemas.dataclass import Coordinate
 
 
@@ -12,6 +12,11 @@ class Location(BaseModel):
 class PointCreate(BaseModel):
     location: Location
     description: str
+
+
+class PointUpdate(BaseModel):
+    location: Optional[Location] = None
+    description: Optional[str] = None
 
 
 class PolygonCoordinates(BaseModel):

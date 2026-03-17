@@ -6,13 +6,23 @@ from shapely import wkt
 from shapely.geometry import Point
 from models import models
 from config.database import get_db
-from schemas.schemas import PointCreate
+from schemas.schemas import PointCreate, PointUpdate
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from fastapi.logger import logger
 
 
 router = APIRouter()
+
+
+def point_to_response(shape: models.Point, db: Session):
+    """Convert a DB point model to the frontend response shape."""
+    geom = wkt.loads(db.scalar(shape.location_point.ST_AsText()))
+    return {
+        "id": shape.id,
+        "location": {"type": "Point", "coordinates": [geom.x, geom.y]},
+        "description": shape.description,
+    }
 
 
 @router.post("/point")
@@ -33,11 +43,7 @@ def create_shape(shape: PointCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(db_shape)
         logger.info(f"Shape created with ID: {db_shape.id}")
-        return {
-            "id": db_shape.id,
-            "location": {"type": "Point", "coordinates": [lon, lat]},
-            "description": db_shape.description,
-        }
+        return point_to_response(db_shape, db)
     except SQLAlchemyError as e:
         db.rollback()
         logger.error(f"Database error: {e}")
@@ -47,17 +53,54 @@ def create_shape(shape: PointCreate, db: Session = Depends(get_db)):
 @router.get("/point/all")
 def get_shapes(db: Session = Depends(get_db)):
     shapes = db.query(models.Point).all()
-    if not shapes:
-        raise HTTPException(status_code=404, detail="No shapes found")
-        logger.error("No shapes found in the database")
-    results = []
-    for shape in shapes:
-        geom = wkt.loads(db.scalar(shape.location_point.ST_AsText()))
-        results.append(
-            {
-                "id": shape.id,
-                "location": {"type": "Point", "coordinates": [geom.x, geom.y]},
-                "description": shape.description,
-            }
-        )
-    return results
+    return [point_to_response(shape, db) for shape in shapes]
+
+
+@router.put("/point/{shape_id}")
+def update_shape(shape_id: int, payload: PointUpdate, db: Session = Depends(get_db)):
+    db_shape = db.query(models.Point).filter(models.Point.id == shape_id).first()
+    if not db_shape:
+        raise HTTPException(status_code=404, detail="Shape not found")
+
+    try:
+        if payload.location:
+            if (
+                not payload.location.coordinates
+                or len(payload.location.coordinates) != 2
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Coordinates must contain exactly two values "
+                        "(longitude and latitude)."
+                    ),
+                )
+            lon, lat = payload.location.coordinates
+            db_shape.location_point = from_shape(Point(lon, lat), srid=4326)
+
+        if payload.description is not None:
+            db_shape.description = payload.description
+
+        db.commit()
+        db.refresh(db_shape)
+        return point_to_response(db_shape, db)
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+
+@router.delete("/point/{shape_id}")
+def delete_shape(shape_id: int, db: Session = Depends(get_db)):
+    db_shape = db.query(models.Point).filter(models.Point.id == shape_id).first()
+    if not db_shape:
+        raise HTTPException(status_code=404, detail="Shape not found")
+
+    try:
+        db.delete(db_shape)
+        db.commit()
+        return {"message": "Shape deleted", "id": shape_id}
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
