@@ -2,6 +2,8 @@
 import React from "react";
 import MapComponent from "./components/MapComponent";
 
+import Chatbot from "./components/Chatbot";
+
 const App: React.FC = () => {
   return (
     <div className="App">
@@ -18,6 +20,7 @@ const App: React.FC = () => {
       <section id="tracker">
         <MapComponent />
       </section>
+      <Chatbot />
     </div>
   );
 };
