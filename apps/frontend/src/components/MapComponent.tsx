@@ -8,6 +8,7 @@ import {
 } from "react-leaflet";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
+import { API_BASE_URL as API_BASE } from "../config";
 
 interface DiseaseLocation {
   type: "Point";
@@ -33,8 +34,6 @@ interface DiseaseSummary {
   total_cases: number;
   disease_breakdown: Record<string, number>;
 }
-
-const API_BASE = "http://localhost:8000";
 
 function MapNavigator({
   target,
@@ -139,7 +138,7 @@ const MapComponent: React.FC = () => {
       setDiseaseCases([]);
       setSummary(null);
       setUploadMessage(
-        "Unable to reach backend API. Ensure backend is running on port 8000.",
+        `Unable to reach backend API at ${API_BASE}. Verify the backend is running and REACT_APP_API_BASE_URL is set correctly.`,
       );
     } finally {
       setIsBusy(false);
