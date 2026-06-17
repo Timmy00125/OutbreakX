@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { CHAT_ENDPOINT } from '../config';
 import './Chatbot.css';
 
 interface Message {
@@ -36,8 +37,7 @@ const Chatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Assuming backend is running on localhost:8000
-      const response = await axios.post('http://localhost:8000/chat', { message: userMessage.text });
+      const response = await axios.post(CHAT_ENDPOINT, { message: userMessage.text });
       const botMessage: Message = { id: Date.now() + 1, text: response.data.reply, sender: 'bot' };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {

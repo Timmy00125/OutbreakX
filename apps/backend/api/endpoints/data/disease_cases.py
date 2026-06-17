@@ -179,14 +179,31 @@ def list_disease_cases(
     db: Session = Depends(get_db),
 ) -> list[DiseaseCaseResponse]:
     """List disease reports optionally filtered by disease name."""
-    query = db.query(models.DiseaseCase)
+    longitude = func.ST_X(models.DiseaseCase.location_point)
+    latitude = func.ST_Y(models.DiseaseCase.location_point)
+    query = db.query(models.DiseaseCase, longitude, latitude)
     if disease:
         query = query.filter(
             func.lower(models.DiseaseCase.disease_name) == disease.lower()
         )
 
-    items = query.order_by(models.DiseaseCase.report_date.desc()).all()
-    return [_to_response(item, db) for item in items]
+    rows = query.order_by(models.DiseaseCase.report_date.desc()).all()
+    return [
+        DiseaseCaseResponse(
+            id=cast(int, item.id),
+            disease_name=cast(str, item.disease_name),
+            location_name=cast(str, item.location_name),
+            report_date=cast(date, item.report_date),
+            case_count=cast(int, item.case_count),
+            source=cast(Optional[str], item.source),
+            severity_score=cast(Optional[float], item.severity_score),
+            location=Location(
+                type="Point",
+                coordinates=Coordinate(longitude=lon, latitude=lat),
+            ),
+        )
+        for item, lon, lat in rows
+    ]
 
 
 @router.get("/summary", response_model=DiseaseSummary)
